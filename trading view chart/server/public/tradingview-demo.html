@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradingView Widget Demo - Deterministic OHLC</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+    }
+    #tradingview_widget {
+      height: 100vh;
+      width: 100%;
+    }
+    #info {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 15px;
+      border-radius: 8px;
+      z-index: 1000;
+      font-size: 13px;
+    }
+    .info-item {
+      margin: 4px 0;
+    }
+    .ws-connected { color: #26a69a; }
+    .ws-disconnected { color: #ef5350; }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <div class="info-item"><strong>TradingView Widget Demo</strong></div>
+    <div class="info-item">Symbol: <span id="symbol">BTCUSD</span></div>
+    <div class="info-item">WebSocket: <span id="ws-status" class="ws-disconnected">Disconnected</span></div>
+  </div>
+
+  <div id="tradingview_widget"></div>
+
+  <!-- TradingView Widget Library -->
+  <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="rng.js"></script>
+  <script src="generator.js"></script>
+
+  <script>
+    // Configuration
+    const API_BASE = 'http://localhost:3000/api';
+    const WS_URL = 'ws://localhost:3000/ws';
+
+    // Global state
+    let ws = null;
+    let clientTimeOffset = 0;
+    let realtimeCallbacks = {};
+
+    /**
+     * TradingView Datafeed Implementation
+     */
+    const Datafeed = {
+      onReady: (callback) => {
+        console.log('[onReady]: Method call');
+        setTimeout(() => {
+          callback({
+            supported_resolutions: ['1', '5', '15', '60', '240', 'D'],
+            exchanges: [{ value: 'Deterministic', name: 'Deterministic', desc: 'Deterministic Exchange' }],
+            symbols_types: [{ name: 'crypto', value: 'crypto' }],
+          });
+        }, 0);
+      },
+
+      searchSymbols: (userInput, exchange, symbolType, onResultReadyCallback) => {
+        console.log('[searchSymbols]: Method call');
+        onResultReadyCallback([]);
+      },
+
+      resolveSymbol: (symbolName, onSymbolResolvedCallback, onResolveErrorCallback) => {
+        console.log('[resolveSymbol]: Method call', symbolName);
+
+        const symbolInfo = {
+          name: symbolName,
+          ticker: symbolName,
+          description: `${symbolName} - Deterministic`,
+          type: 'crypto',
+          session: '24x7',
+          timezone: 'Etc/UTC',
+          exchange: 'Deterministic',
+          minmov: 1,
+          pricescale: 100,
+          has_intraday: true,
+          has_no_volume: true,
+          supported_resolutions: ['1', '5', '15', '60', '240', 'D'],
+          volume_precision: 0,
+          data_status: 'streaming',
+        };
+
+        setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
+      },
+
+      getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
+        console.log('[getBars]: Method call', symbolInfo.name, resolution, periodParams);
+
+        try {
+          const { from, to, firstDataRequest } = periodParams;
+          const timeframeMinutes = resolutionToMinutes(resolution);
+          const symbol = symbolInfo.name;
+          const version = 'v1';
+
+          const startMs = from * 1000;
+          const endMs = to * 1000;
+
+          const url = `${API_BASE}/ohlc?symbol=${symbol}&timeframeMinutes=${timeframeMinutes}&start=${startMs}&end=${endMs}&version=${version}&includePartial=false`;
+          const response = await fetch(url);
+          const data = await response.json();
+
+          // Update time offset
+          clientTimeOffset = data.serverTimeMs - Date.now();
+
+          // Convert candles to TradingView format
+          const bars = data.candles.map(c => ({
+            time: c.start_time_ms,
+            open: c.open,
+            high: c.high,
+            low: c.low,
+            close: c.close,
+            volume: c.volume || 0,
+          }));
+
+          console.log('[getBars]: Returned', bars.length, 'bars');
+
+          if (bars.length === 0) {
+            onHistoryCallback([], { noData: true });
+          } else {
+            onHistoryCallback(bars, { noData: false });
+          }
+        } catch (error) {
+          console.error('[getBars]: Error', error);
+          onErrorCallback(error);
+        }
+      },
+
+      subscribeBars: (symbolInfo, resolution, onRealtimeCallback, subscriberUID, onResetCacheNeededCallback) => {
+        console.log('[subscribeBars]: Method call', subscriberUID, symbolInfo.name, resolution);
+
+        const timeframeMinutes = resolutionToMinutes(resolution);
+        const symbol = symbolInfo.name;
+        const version = 'v1';
+
+        // Store callback
+        realtimeCallbacks[subscriberUID] = {
+          callback: onRealtimeCallback,
+          symbol,
+          timeframeMinutes,
+          version,
+        };
+
+        // Connect WebSocket if not connected
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          connectWebSocket();
+        }
+      },
+
+      unsubscribeBars: (subscriberUID) => {
+        console.log('[unsubscribeBars]: Method call', subscriberUID);
+        delete realtimeCallbacks[subscriberUID];
+      },
+    };
+
+    // Connect WebSocket for real-time updates
+    function connectWebSocket() {
+      if (ws) {
+        ws.close();
+      }
+
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        document.getElementById('ws-status').textContent = 'Connected';
+        document.getElementById('ws-status').className = 'ws-connected';
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          if (data.type === 'candle_completed') {
+            handleRealtimeCandle(data);
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        document.getElementById('ws-status').textContent = 'Disconnected';
+        document.getElementById('ws-status').className = 'ws-disconnected';
+        setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+    }
+
+    // Handle real-time candle updates
+    function handleRealtimeCandle(data) {
+      const { meta, candle } = data;
+
+      // Notify all matching subscribers
+      Object.keys(realtimeCallbacks).forEach((uid) => {
+        const sub = realtimeCallbacks[uid];
+        if (
+          sub.symbol === meta.symbol &&
+          sub.timeframeMinutes === meta.timeframeMinutes &&
+          sub.version === meta.version
+        ) {
+          const bar = {
+            time: candle.start_time_ms,
+            open: candle.open,
+            high: candle.high,
+            low: candle.low,
+            close: candle.close,
+            volume: candle.volume || 0,
+          };
+          sub.callback(bar);
+          console.log('[Realtime]: New bar', bar);
+        }
+      });
+    }
+
+    // Convert TradingView resolution to minutes
+    function resolutionToMinutes(resolution) {
+      if (resolution === 'D') return 1440;
+      if (resolution === 'W') return 10080;
+      if (resolution === 'M') return 43200;
+      return parseInt(resolution, 10);
+    }
+
+    // Initialize TradingView chart
+    function initTradingView() {
+      const widget = new TradingView.widget({
+        symbol: 'BTCUSD',
+        interval: '1',
+        fullscreen: true,
+        container: 'tradingview_widget',
+        datafeed: Datafeed,
+        library_path: 'https://unpkg.com/lightweight-charts@4.1.0/dist/',
+        locale: 'en',
+        disabled_features: ['use_localstorage_for_settings'],
+        enabled_features: ['study_templates'],
+        charts_storage_url: 'https://saveload.tradingview.com',
+        charts_storage_api_version: '1.1',
+        client_id: 'tradingview.com',
+        user_id: 'public_user_id',
+        theme: 'dark',
+        autosize: true,
+      });
+
+      console.log('TradingView widget initialized');
+    }
+
+    // Note: TradingView widget requires their library
+    // For this demo, we'll use lightweight-charts instead as a fallback
+    // since TradingView widget requires registration and library download
+
+    // Fallback to lightweight-charts
+    console.log('TradingView widget demo - using lightweight-charts as fallback');
+    console.log('For full TradingView widget, you need to download their library');
+
+    // Initialize lightweight-charts as demonstration
+    const chart = LightweightCharts.createChart(document.getElementById('tradingview_widget'), {
+      layout: {
+        background: { color: '#131722' },
+        textColor: '#d1d4dc',
+      },
+      grid: {
+        vertLines: { color: '#1e222d' },
+        horzLines: { color: '#1e222d' },
+      },
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: true,
+      },
+    });
+
+    const candleSeries = chart.addCandlestickSeries({
+      upColor: '#26a69a',
+      downColor: '#ef5350',
+      borderVisible: false,
+      wickUpColor: '#26a69a',
+      wickDownColor: '#ef5350',
+    });
+
+    // Load data using the datafeed
+    async function loadData() {
+      const symbolInfo = { name: 'BTCUSD' };
+      const resolution = '1';
+      const endMs = Date.now();
+      const startMs = endMs - 200 * 60 * 1000; // 200 candles
+
+      Datafeed.getBars(
+        symbolInfo,
+        resolution,
+        { from: Math.floor(startMs / 1000), to: Math.floor(endMs / 1000), firstDataRequest: true },
+        (bars, meta) => {
+          const chartBars = bars.map(b => ({
+            time: Math.floor(b.time / 1000),
+            open: b.open,
+            high: b.high,
+            low: b.low,
+            close: b.close,
+          }));
+          candleSeries.setData(chartBars);
+          console.log('Data loaded:', chartBars.length, 'candles');
+        },
+        (error) => {
+          console.error('Error loading data:', error);
+        }
+      );
+
+      // Subscribe for real-time updates
+      Datafeed.subscribeBars(
+        symbolInfo,
+        resolution,
+        (bar) => {
+          candleSeries.update({
+            time: Math.floor(bar.time / 1000),
+            open: bar.open,
+            high: bar.high,
+            low: bar.low,
+            close: bar.close,
+          });
+        },
+        'unique-subscriber-1',
+        () => {}
+      );
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deterministic Candle Generator Demo</title>
+    <style>
+        :root {
+            --bg-dark: #0a0e1a;
+            --bg-panel: #151a2b;
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --accent-green: #22d3a7;
+            --accent-red: #ef476f;
+            --accent-blue: #3b82f6;
+            --border: #2d3748;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+        
+        .controls-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        input, select {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        
+        button.secondary {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+        }
+        
+        button.secondary:hover {
+            background: var(--border);
+        }
+        
+        .chart-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            height: 500px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-card {
+            background: var(--bg-dark);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-blue);
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .info-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--accent-blue);
+        }
+        
+        .info-content {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        code {
+            background: var(--bg-dark);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: var(--accent-green);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🕯️ Deterministic Candle Generator</h1>
+        <p class="subtitle">Same seed = Same candles. Always. Everywhere.</p>
+        
+        <div class="controls-panel">
+            <div class="control-group">
+                <div class="form-field">
+                    <label for="symbol">Symbol</label>
+                    <select id="symbol">
+                        <option value="BTCUSD">BTC/USD</option>
+                        <option value="ETHUSD">ETH/USD</option>
+                        <option value="EURUSD">EUR/USD</option>
+                        <option value="GBPUSD">GBP/USD</option>
+                        <option value="AAPL">AAPL</option>
+                    </select>
+                </div>
+                
+                <div class="form-field">
+                    <label for="timeframe">Timeframe</label>
+                    <select id="timeframe">
+                        <option value="1m">1 Minute</option>
+                        <option value="5m">5 Minutes</option>
+                        <option value="15m">15 Minutes</option>
+                        <option value="1h">1 Hour</option>
+                        <option value="4h">4 Hours</option>
+                    </select>
+                </div>
+                
+                <div class="form-field">
+                    <label for="version">History Version</label>
+                    <select id="version">
+                        <option value="v1">v1</option>
+                        <option value="v2">v2</option>
+                        <option value="v3">v3</option>
+                    </select>
+                </div>
+                
+                <div class="form-field">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" value="2025-11-09">
+                </div>
+                
+                <div class="form-field">
+                    <label for="startPrice">Start Price</label>
+                    <input type="number" id="startPrice" value="42000" step="100">
+                </div>
+                
+                <div class="form-field">
+                    <label for="volatility">Volatility (%)</label>
+                    <input type="number" id="volatility" value="0.2" step="0.1" min="0.1" max="5">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="generateAndDisplay()">🔄 Generate Candles</button>
+                <button class="secondary" onclick="startLiveUpdates()">📊 Start Live Updates</button>
+                <button class="secondary" onclick="stopLiveUpdates()">⏸️ Stop Live</button>
+                <button class="secondary" onclick="compareVersions()">🔍 Compare Versions</button>
+            </div>
+            
+            <div class="info-box">
+                <div class="info-title">🔐 Seed String</div>
+                <div class="info-content">
+                    <code id="seedString">Not generated yet</code>
+                    <p style="margin-top: 8px;">This seed determines the entire candle series. Same seed = identical candles across all browsers and sessions.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="chartContainer" class="chart-container">
+            <div class="loading">Click "Generate Candles" to start</div>
+        </div>
+        
+        <div class="stats-panel">
+            <h3 style="margin-bottom: 15px;">📈 Statistics</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Candles Generated</div>
+                    <div class="stat-value" id="statCandles">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">First Price</div>
+                    <div class="stat-value" id="statFirst">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last Price</div>
+                    <div class="stat-value" id="statLast">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">High</div>
+                    <div class="stat-value" style="color: var(--accent-green);" id="statHigh">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Low</div>
+                    <div class="stat-value" style="color: var(--accent-red);" id="statLow">-</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Range</div>
+                    <div class="stat-value" id="statRange">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Load lightweight-charts from CDN -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <!-- Load deterministic candle generator -->
+    <script src="src/js/deterministic-candles.js"></script>
+    
+    <script>
+        let chart = null;
+        let candlestickSeries = null;
+        let liveUpdateInterval = null;
+        let currentCandles = [];
+        let currentSeedString = '';
+        
+        function initChart() {
+            const container = document.getElementById('chartContainer');
+            container.innerHTML = '';
+            
+            chart = LightweightCharts.createChart(container, {
+                width: container.clientWidth - 40,
+                height: container.clientHeight - 40,
+                layout: {
+                    background: { color: '#151a2b' },
+                    textColor: '#9ca3af',
+                },
+                grid: {
+                    vertLines: { color: '#2d3748' },
+                    horzLines: { color: '#2d3748' },
+                },
+                timeScale: {
+                    timeVisible: true,
+                    secondsVisible: false,
+                },
+                crosshair: {
+                    mode: LightweightCharts.CrosshairMode.Normal,
+                }
+            });
+            
+            candlestickSeries = chart.addCandlestickSeries({
+                upColor: '#22d3a7',
+                downColor: '#ef476f',
+                borderVisible: false,
+                wickUpColor: '#22d3a7',
+                wickDownColor: '#ef476f',
+            });
+            
+            window.addEventListener('resize', () => {
+                chart.applyOptions({ width: container.clientWidth - 40 });
+            });
+        }
+        
+        function generateAndDisplay() {
+            stopLiveUpdates();
+            
+            const symbol = document.getElementById('symbol').value;
+            const timeframe = document.getElementById('timeframe').value;
+            const version = document.getElementById('version').value;
+            const date = document.getElementById('date').value;
+            const startPrice = parseFloat(document.getElementById('startPrice').value);
+            const volatilityPercent = parseFloat(document.getElementById('volatility').value);
+            
+            currentSeedString = DeterministicCandles.createSeedString(
+                symbol, timeframe, version, date, date
+            );
+            
+            document.getElementById('seedString').textContent = currentSeedString;
+            
+            const timeframeMinutes = DeterministicCandles.timeframeToMinutes(timeframe);
+            const startTimestampMs = new Date(`${date}T00:00:00Z`).getTime();
+            
+            // Calculate candle count for full day
+            const candleCount = Math.floor((24 * 60) / timeframeMinutes);
+            
+            currentCandles = DeterministicCandles.generateSeries({
+                seedString: currentSeedString,
+                startTimestampMs: startTimestampMs,
+                candleCount: candleCount,
+                timeframeMinutes: timeframeMinutes,
+                startPrice: startPrice,
+                volatility: volatilityPercent / 100,
+                decimals: 2,
+                includeVolume: true
+            });
+            
+            if (!chart) initChart();
+            
+            const chartData = currentCandles.map(c => ({
+                time: Math.floor(c.time / 1000),
+                open: c.open,
+                high: c.high,
+                low: c.low,
+                close: c.close
+            }));
+            
+            candlestickSeries.setData(chartData);
+            chart.timeScale().fitContent();
+            
+            updateStats();
+        }
+        
+        function updateStats() {
+            if (currentCandles.length === 0) return;
+            
+            const allHighs = currentCandles.map(c => c.high);
+            const allLows = currentCandles.map(c => c.low);
+            const high = Math.max(...allHighs);
+            const low = Math.min(...allLows);
+            
+            document.getElementById('statCandles').textContent = currentCandles.length;
+            document.getElementById('statFirst').textContent = currentCandles[0].open.toFixed(2);
+            document.getElementById('statLast').textContent = currentCandles[currentCandles.length - 1].close.toFixed(2);
+            document.getElementById('statHigh').textContent = high.toFixed(2);
+            document.getElementById('statLow').textContent = low.toFixed(2);
+            document.getElementById('statRange').textContent = ((high - low) / low * 100).toFixed(2) + '%';
+        }
+        
+        function startLiveUpdates() {
+            if (currentCandles.length === 0) {
+                alert('Generate candles first!');
+                return;
+            }
+            
+            stopLiveUpdates();
+            
+            const timeframeMinutes = DeterministicCandles.timeframeToMinutes(
+                document.getElementById('timeframe').value
+            );
+            const volatilityPercent = parseFloat(document.getElementById('volatility').value);
+            
+            // Start with simulated time for continuous movement
+            let simulatedTime = Date.now();
+            const speedMultiplier = 60; // Speed up time 60x for visible movement
+            
+            liveUpdateInterval = setInterval(() => {
+                // Advance simulated time
+                simulatedTime += 1000 * speedMultiplier;
+                
+                const lastCandle = currentCandles[currentCandles.length - 1];
+                const nowMs = simulatedTime;
+                
+                const liveCandle = DeterministicCandles.generateLiveUpdate({
+                    seedString: currentSeedString,
+                    lastCandle: lastCandle,
+                    nowMs: nowMs,
+                    timeframeMinutes: timeframeMinutes,
+                    volatility: volatilityPercent / 100,
+                    decimals: 2
+                });
+                
+                // Update the chart
+                candlestickSeries.update({
+                    time: Math.floor(liveCandle.time / 1000),
+                    open: liveCandle.open,
+                    high: liveCandle.high,
+                    low: liveCandle.low,
+                    close: liveCandle.close
+                });
+                
+                // Update stats with live candle
+                document.getElementById('statLast').textContent = liveCandle.close.toFixed(2);
+                
+                // When candle completes, add it to history and start new one
+                if (liveCandle.progress >= 1.0) {
+                    currentCandles.push(liveCandle);
+                    console.log('Candle completed, starting new candle');
+                }
+                
+                console.log(`Live: ${liveCandle.close.toFixed(2)} (${(liveCandle.progress * 100).toFixed(1)}%)`);
+            }, 100); // Update 10 times per second for smooth animation
+            
+            console.log('Live updates started (accelerated time)');
+            alert('Live updates started! Candles will update in real-time with accelerated movement.');
+        }
+        
+        function stopLiveUpdates() {
+            if (liveUpdateInterval) {
+                clearInterval(liveUpdateInterval);
+                liveUpdateInterval = null;
+                console.log('Live updates stopped');
+            }
+        }
+        
+        function compareVersions() {
+            const symbol = document.getElementById('symbol').value;
+            const timeframe = document.getElementById('timeframe').value;
+            const date = document.getElementById('date').value;
+            const startPrice = parseFloat(document.getElementById('startPrice').value);
+            const volatilityPercent = parseFloat(document.getElementById('volatility').value);
+            const timeframeMinutes = DeterministicCandles.timeframeToMinutes(timeframe);
+            const startTimestampMs = new Date(`${date}T00:00:00Z`).getTime();
+            
+            const versions = ['v1', 'v2', 'v3'];
+            const results = {};
+            
+            versions.forEach(version => {
+                const seedString = DeterministicCandles.createSeedString(
+                    symbol, timeframe, version, date, date
+                );
+                
+                const candles = DeterministicCandles.generateSeries({
+                    seedString: seedString,
+                    startTimestampMs: startTimestampMs,
+                    candleCount: 100,
+                    timeframeMinutes: timeframeMinutes,
+                    startPrice: startPrice,
+                    volatility: volatilityPercent / 100,
+                    decimals: 2
+                });
+                
+                results[version] = {
+                    first: candles[0].close,
+                    last: candles[candles.length - 1].close,
+                    high: Math.max(...candles.map(c => c.high)),
+                    low: Math.min(...candles.map(c => c.low))
+                };
+            });
+            
+            console.log('Version Comparison:', results);
+            alert('Version comparison logged to console. Open DevTools (F12) to see results.');
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', () => {
+            document.getElementById('date').valueAsDate = new Date();
+            // Auto-generate candles on page load
+            setTimeout(() => {
+                generateAndDisplay();
+                // Auto-start live updates for immediate movement
+                setTimeout(() => {
+                    startLiveUpdates();
+                }, 1000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>

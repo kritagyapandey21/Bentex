@@ -1,0 +1,37 @@
+<!-- Analytics Page Content -->
+<div class="flex-1 p-4 sm:p-6 lg:p-8 flex-col">
+  <div class="max-w-7xl mx-auto w-full">
+    <h1 class="text-3xl font-bold text-white mb-6">Trading Analytics</h1>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="glass-panel stat-card glow-on-hover">
+        <div class="stat-card-label"><span>Total Trades</span><i class="fas fa-chart-line text-[var(--neon-blue)]"></i></div>
+        <div class="stat-card-value" id="analytics-total-trades">0</div>
+        <div class="stat-card-change" id="analytics-trades-change">--</div>
+      </div>
+      <div class="glass-panel stat-card glow-on-hover">
+        <div class="stat-card-label"><span>Total P&L</span><i class="fas fa-dollar-sign text-[var(--neon-green)]"></i></div>
+        <div class="stat-card-value" id="analytics-total-profit">$0.00</div>
+        <div class="stat-card-change" id="analytics-profit-change">--</div>
+      </div>
+      <div class="glass-panel stat-card glow-on-hover">
+        <div class="stat-card-label"><span>Win Rate</span><i class="fas fa-percentage text-yellow-400"></i></div>
+        <div class="stat-card-value" id="analytics-win-rate">0%</div>
+        <div class="stat-card-change" id="analytics-winrate-change">--</div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="glass-panel card">
+        <h2 class="card-header">Recent Trade History</h2>
+        <div id="analytics-history-list" class="space-y-2 max-h-96 overflow-y-auto">
+          <p class="text-gray-400 text-center py-8">Loading...</p>
+        </div>
+      </div>
+      <div class="glass-panel card">
+        <h2 class="card-header">Asset Distribution</h2>
+        <div id="analytics-asset-dist" class="space-y-2 max-h-96 overflow-y-auto">
+          <p class="text-gray-400 text-center py-8">Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lightweight Charts Demo - Deterministic OHLC</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+    }
+    h1 {
+      margin: 0 0 20px 0;
+      font-size: 24px;
+    }
+    #controls {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .control-group label {
+      font-size: 12px;
+      color: #999;
+    }
+    .control-group input, .control-group select {
+      padding: 8px 12px;
+      border: 1px solid #333;
+      background: #0f0f0f;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button {
+      padding: 8px 16px;
+      background: #2962ff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      align-self: flex-end;
+    }
+    button:hover {
+      background: #1e53e5;
+    }
+    #chart {
+      height: 600px;
+      background: #131722;
+      border-radius: 8px;
+    }
+    #status {
+      margin-top: 15px;
+      padding: 12px;
+      background: #1a1a1a;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #999;
+    }
+    .status-item {
+      margin: 4px 0;
+    }
+    .ws-connected { color: #26a69a; }
+    .ws-disconnected { color: #ef5350; }
+  </style>
+</head>
+<body>
+  <h1>📈 Deterministic OHLC Chart - Lightweight Charts</h1>
+  
+  <div id="controls">
+    <div class="control-group">
+      <label>Symbol</label>
+      <input type="text" id="symbol" value="BTCUSD" />
+    </div>
+    <div class="control-group">
+      <label>Timeframe (minutes)</label>
+      <select id="timeframe">
+        <option value="1">1m</option>
+        <option value="5">5m</option>
+        <option value="15">15m</option>
+        <option value="60">1h</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <label>Version</label>
+      <input type="text" id="version" value="v1" />
+    </div>
+    <div class="control-group">
+      <label>Candles to load</label>
+      <input type="number" id="candleCount" value="1000" min="10" max="5000" />
+    </div>
+    <button onclick="loadChart()">Load Chart</button>
+    <button onclick="saveCurrentCandle()">Save Current Candle</button>
+  </div>
+
+  <div id="chart"></div>
+
+  <div id="status">
+    <div class="status-item">WebSocket: <span id="ws-status" class="ws-disconnected">Disconnected</span></div>
+    <div class="status-item">Loaded candles: <span id="candle-count">0</span></div>
+    <div class="status-item">Current Price: <span id="current-price">--</span></div>
+    <div class="status-item">Server time offset: <span id="time-offset">0</span> ms</div>
+    <div class="status-item">Last update: <span id="last-update">Never</span></div>
+  </div>
+
+  <!-- Lightweight Charts Library -->
+  <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+  
+  <!-- Our utilities -->
+  <script src="rng.js"></script>
+  <script src="generator.js"></script>
+
+  <script>
+    // Configuration
+    const API_BASE = 'http://localhost:3000/api';
+    const WS_URL = 'ws://localhost:3000/ws';
+
+    // Global state
+    let chart = null;
+    let candleSeries = null;
+    let ws = null;
+    let clientTimeOffset = 0;
+    let currentConfig = null;
+    let lastCandle = null;
+    let partialUpdateInterval = null;
+    let allCandles = [];
+
+    // Initialize chart
+    function initChart() {
+      const chartContainer = document.getElementById('chart');
+      chartContainer.innerHTML = ''; // Clear previous chart
+
+      chart = LightweightCharts.createChart(chartContainer, {
+        layout: {
+          background: { color: '#131722' },
+          textColor: '#d1d4dc',
+        },
+        grid: {
+          vertLines: { color: '#1e222d' },
+          horzLines: { color: '#1e222d' },
+        },
+        timeScale: {
+          timeVisible: true,
+          secondsVisible: true,
+          rightOffset: 5,
+          barSpacing: 3,
+          minBarSpacing: 2,
+          fixLeftEdge: false,
+          fixRightEdge: false,
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+          mode: LightweightCharts.PriceScaleMode.Normal,
+          autoScale: true,
+          scaleMargins: {
+            top: 0.2,
+            bottom: 0.2,
+          },
+          borderVisible: false,
+        },
+      });
+
+      candleSeries = chart.addCandlestickSeries({
+        upColor: '#26a69a',
+        downColor: '#ef5350',
+        borderVisible: false,
+        wickUpColor: '#26a69a',
+        wickDownColor: '#ef5350',
+        priceLineVisible: true,
+        lastValueVisible: true,
+        priceFormat: {
+          type: 'price',
+          precision: 2,
+          minMove: 0.01,
+        },
+      });
+
+      // Auto-resize
+      const resizeObserver = new ResizeObserver(() => {
+        if (chart) {
+          chart.applyOptions({ width: chartContainer.clientWidth });
+        }
+      });
+      resizeObserver.observe(chartContainer);
+    }
+
+    // Load chart data
+    async function loadChart() {
+      const symbol = document.getElementById('symbol').value;
+      const timeframeMinutes = parseInt(document.getElementById('timeframe').value);
+      const version = document.getElementById('version').value;
+      const candleCount = parseInt(document.getElementById('candleCount').value);
+
+      // Calculate time range
+      const endMs = Date.now();
+      const timeframeMs = timeframeMinutes * 60 * 1000;
+      const startMs = endMs - (candleCount * timeframeMs);
+
+      currentConfig = { symbol, timeframeMinutes, version, timeframeMs };
+
+      try {
+        const url = `${API_BASE}/ohlc?symbol=${symbol}&timeframeMinutes=${timeframeMinutes}&start=${startMs}&end=${endMs}&version=${version}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        // Calculate time offset
+        clientTimeOffset = data.serverTimeMs - Date.now();
+        document.getElementById('time-offset').textContent = clientTimeOffset;
+
+        // Convert candles for lightweight-charts (ms → seconds)
+        allCandles = data.candles.map(c => ({
+          time: Math.floor(c.start_time_ms / 1000),
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+        }));
+
+        // Add server-provided partial if present
+        if (data.partial) {
+          const partial = {
+            time: Math.floor(data.partial.start_time_ms / 1000),
+            open: data.partial.open,
+            high: data.partial.high,
+            low: data.partial.low,
+            close: data.partial.close,
+          };
+          allCandles.push(partial);
+          lastCandle = partial;
+        } else if (allCandles.length > 0) {
+          lastCandle = allCandles[allCandles.length - 1];
+        }
+
+        // Initialize chart and set data
+        initChart();
+        candleSeries.setData(allCandles);
+        
+        // Set visible range to show ~15-20 candles for better visibility
+        if (allCandles.length > 0) {
+          const lastCandle = allCandles[allCandles.length - 1];
+          const startIndex = Math.max(0, allCandles.length - 15);
+          const firstVisible = allCandles[startIndex];
+          
+          chart.timeScale().setVisibleRange({
+            from: firstVisible.time,
+            to: lastCandle.time + 300, // Add 5 minutes of space on the right
+          });
+        }
+
+        document.getElementById('candle-count').textContent = allCandles.length;
+        document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+
+        // Start partial candle updates
+        startPartialUpdates();
+
+        // Connect WebSocket
+        connectWebSocket();
+
+        console.log('Chart loaded:', data);
+      } catch (error) {
+        console.error('Error loading chart:', error);
+        alert('Failed to load chart data');
+      }
+    }
+
+    // Update partial candle (client-side interpolation)
+    function updatePartialCandle() {
+      if (!currentConfig) return;
+
+      const { symbol, timeframeMinutes, version, timeframeMs } = currentConfig;
+      const serverTimeMs = Date.now() + clientTimeOffset;
+
+      const currentCandleIndex = getCandleIndex(serverTimeMs, timeframeMinutes);
+      const currentCandleStartMs = getCandleStartTime(currentCandleIndex, timeframeMinutes);
+
+      const seedBase = `${symbol}|${timeframeMinutes}|${version}|`;
+      
+      // Get prevClose from the last completed candle
+      let prevClose = 42000; // Default initial price
+      if (allCandles && allCandles.length > 0) {
+        // Find the last completed candle (not the current forming one)
+        const currentCandleTime = Math.floor(currentCandleStartMs / 1000);
+        const completedCandles = allCandles.filter(c => c.time < currentCandleTime);
+        if (completedCandles.length > 0) {
+          prevClose = completedCandles[completedCandles.length - 1].close;
+        } else if (allCandles.length > 0) {
+          prevClose = allCandles[0].open || 42000;
+        }
+      }
+
+      const partial = generatePartialCandle({
+        seedBase,
+        index: currentCandleIndex,
+        prevClose,
+        candleStartMs: currentCandleStartMs,
+        serverTimeMs,
+        timeframeMs,
+        volatility: 0.02,
+        timeframeMinutes,
+        priceDecimals: 2,
+      });
+
+      // Update or add the current candle
+      if (candleSeries) {
+        candleSeries.update(partial);
+        lastCandle = partial;
+        
+        // Update current price display
+        document.getElementById('current-price').textContent = partial.close.toFixed(2);
+      }
+      
+      document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+    }
+
+    // Start partial candle updates
+    function startPartialUpdates() {
+      if (partialUpdateInterval) {
+        clearInterval(partialUpdateInterval);
+      }
+      partialUpdateInterval = setInterval(updatePartialCandle, 100); // Update every 100ms for smooth movement
+    }
+
+    // Connect WebSocket
+    function connectWebSocket() {
+      if (ws) {
+        ws.close();
+      }
+
+      ws = new WebSocket(WS_URL);
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        document.getElementById('ws-status').textContent = 'Connected';
+        document.getElementById('ws-status').className = 'ws-connected';
+
+        // Subscribe to updates
+        ws.send(JSON.stringify({
+          type: 'subscribe',
+          subscription: currentConfig,
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('WebSocket message:', data);
+
+          if (data.type === 'candle_completed') {
+            handleCompletedCandle(data);
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        document.getElementById('ws-status').textContent = 'Disconnected';
+        document.getElementById('ws-status').className = 'ws-disconnected';
+
+        // Reconnect after 3 seconds
+        setTimeout(connectWebSocket, 3000);
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+    }
+
+    // Handle completed candle from WebSocket
+    function handleCompletedCandle(data) {
+      const { meta, candle } = data;
+
+      // Check if it matches our current config
+      if (
+        meta.symbol !== currentConfig.symbol ||
+        meta.timeframeMinutes !== currentConfig.timeframeMinutes ||
+        meta.version !== currentConfig.version
+      ) {
+        return; // Not for this chart
+      }
+
+      // Convert to chart format
+      const newCandle = {
+        time: Math.floor(candle.start_time_ms / 1000),
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+      };
+
+      // Update series
+      candleSeries.update(newCandle);
+      lastCandle = newCandle;
+
+      // Update candle list
+      allCandles.push(newCandle);
+      document.getElementById('candle-count').textContent = allCandles.length;
+
+      console.log('New completed candle added:', newCandle);
+    }
+
+    // Save current partial candle
+    async function saveCurrentCandle() {
+      if (!currentConfig || !lastCandle) {
+        alert('Load chart first');
+        return;
+      }
+
+      const { symbol, timeframeMinutes, version, timeframeMs } = currentConfig;
+      const serverTimeMs = Date.now() + clientTimeOffset;
+
+      const currentCandleIndex = getCandleIndex(serverTimeMs, timeframeMinutes);
+      const currentCandleStartMs = getCandleStartTime(currentCandleIndex, timeframeMinutes);
+
+      // Get current partial state
+      const seedBase = `${symbol}|${timeframeMinutes}|${version}|`;
+      const prevClose = lastCandle.close;
+
+      const partial = generatePartialCandle({
+        seedBase,
+        index: currentCandleIndex,
+        prevClose,
+        candleStartMs: currentCandleStartMs,
+        serverTimeMs,
+        timeframeMs,
+        volatility: 0.02,
+        timeframeMinutes,
+        priceDecimals: 2,
+      });
+
+      // Convert to save format
+      const candle = {
+        start_time_ms: currentCandleStartMs,
+        open: partial.open,
+        high: partial.high,
+        low: partial.low,
+        close: partial.close,
+        volume: 100,
+      };
+
+      try {
+        const response = await fetch(`${API_BASE}/save_candle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            meta: { symbol, timeframeMinutes, version },
+            candle,
+          }),
+        });
+
+        const result = await response.json();
+        console.log('Save result:', result);
+        alert(result.inserted ? 'Candle saved!' : 'Candle already exists (idempotent)');
+      } catch (error) {
+        console.error('Error saving candle:', error);
+        alert('Failed to save candle');
+      }
+    }
+
+    // Auto-load on page load
+    window.onload = () => {
+      loadChart();
+    };
+  </script>
+</body>
+</html>

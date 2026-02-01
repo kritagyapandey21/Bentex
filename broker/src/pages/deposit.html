@@ -1,0 +1,67 @@
+<!-- Deposit Page Content (from backup) -->
+<div class="flex-1 p-4 sm:p-6 lg:p-8 flex-col" id="deposit-page">
+  <div class="max-w-4xl mx-auto w-full">
+    <h1 class="text-3xl font-bold text-white mb-6">Deposit Funds</h1>
+    <p class="text-sm text-[var(--color-text-secondary)] mb-6">Account: <span id="deposit-user-email" class="font-semibold text-[var(--color-text-primary)]">—</span></p>
+    <div class="glass-panel card mb-8">
+      <h2 class="card-header">E-Payments</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glass-panel payment-option glow-on-hover">
+          <div class="payment-icon-wrapper bg-blue-600"><i class="fas fa-credit-card text-white text-xl"></i></div>
+          <div><h3>Credit/Debit Card</h3><p>Visa, Mastercard, Maestro</p></div>
+        </div>
+        <div class="glass-panel payment-option glow-on-hover">
+          <div class="payment-icon-wrapper bg-green-600"><i class="fab fa-paypal text-white text-xl"></i></div>
+          <div><h3>PayPal</h3><p>Fast and secure payments</p></div>
+        </div>
+        <div class="glass-panel payment-option glow-on-hover">
+          <div class="payment-icon-wrapper bg-yellow-600"><i class="fas fa-mobile-alt text-white text-xl"></i></div>
+          <div><h3>Apple Pay</h3><p>Pay with your Apple device</p></div>
+        </div>
+        <div class="glass-panel payment-option glow-on-hover">
+          <div class="payment-icon-wrapper bg-blue-500"><i class="fas fa-university text-white text-xl"></i></div>
+          <div><h3>Bank Transfer</h3><p>Direct bank transfer</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="glass-panel card mb-8">
+      <h2 class="card-header">Cryptocurrency</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glass-panel payment-option glow-on-hover">
+          <div class="payment-icon-wrapper bg-yellow-500"><i class="fab fa-bitcoin text-white text-xl"></i></div>
+          <div><h3>Bitcoin (BTC)</h3><p>Fast and secure payments</p></div>
+        </div>
+        <div class="glass-panel payment-option glow-on-hover">
+          <div class="payment-icon-wrapper bg-blue-400"><i class="fab fa-ethereum text-white text-xl"></i></div>
+          <div><h3>Ethereum (ETH)</h3><p>Fast and secure payments</p></div>
+        </div>
+        <div class="glass-panel payment-option glow-on-hover">
+          <div class="payment-icon-wrapper bg-purple-500"><i class="fas fa-coins text-white text-xl"></i></div>
+          <div><h3>USDT</h3><p>Tether (ERC-20)</p></div>
+        </div>
+        <div class="glass-panel payment-option glow-on-hover">
+          <div class="payment-icon-wrapper bg-red-500"><i class="fas fa-gem text-white text-xl"></i></div>
+          <div><h3>Litecoin (LTC)</h3><p>Fast and secure payments</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="glass-panel card">
+      <h2 class="card-header">Deposit Amount</h2>
+      <div class="mb-4">
+        <div class="flex gap-2 mb-2">
+          <button class="amount-option control-btn active-btn flex-1" data-amount="100">$100</button>
+          <button class="amount-option control-btn flex-1" data-amount="500">$500</button>
+          <button class="amount-option control-btn flex-1" data-amount="1000">$1,000</button>
+          <button class="amount-option control-btn flex-1" data-amount="5000">$5,000</button>
+        </div>
+        <div class="flex gap-2">
+          <input type="number" id="depositAmount" class="flex-1 glass-input" value="100" min="10" step="10">
+          <button id="decreaseDeposit" class="control-btn w-12 h-12 flex items-center justify-center">-</button>
+          <button id="increaseDeposit" class="control-btn w-12 h-12 flex items-center justify-center">+</button>
+        </div>
+      </div>
+      <button class="w-full btn-glow btn-glow-buy py-3" id="depositSubmit">Deposit Now</button>
+      <p id="depositSummary" class="text-xs text-[var(--color-text-muted)] mt-3">Minimum deposit is 10.</p>
+    </div>
+  </div>
+</div>

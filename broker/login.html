@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Tanix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for social icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Inter Font --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            /* Ensure body takes full height and positions children correctly */
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            position: relative; /* Needed for absolute positioning of particles */
+        }
+        /* Custom scrollbar for a more modern look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; /* slate-800 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155; /* slate-700 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569; /* slate-600 */
+        }
+
+        /* Particles.js Container Styling */
+        #particles-js {
+            position: fixed; /* Fix to viewport */
+            width: 100%;
+            height: 100%;
+            background-color: #0f172a; /* Deep slate background */
+            background-image: url('');
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-position: 50% 50%;
+            z-index: -1; /* Ensure it stays behind other content */
+        }
+
+        /* Main content should be on top of particles */
+        .main-content {
+            position: relative;
+            z-index: 10;
+            flex-grow: 1; /* Allow content to push footer down */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem; /* Add some padding around the main card */
+        }
+
+        footer {
+            position: relative; /* Keep footer on top of particles */
+            z-index: 10;
+            background-color: #0f172a; /* Match body background or slightly darker */
+        }
+
+    </style>
+</head>
+<body class="bg-slate-900 text-gray-100 antialiased">
+
+    <!-- Particles.js Container --><div id="particles-js"></div>
+
+    <!-- Main Content Wrapper (contains login card) --><div class="main-content">
+        <!-- Main Container (was min-h-screen flex items-center justify-center p-4) --><div class="flex items-center justify-center p-4 w-full">
+            <!-- Login Card --><div class="bg-slate-800 rounded-2xl shadow-2xl flex flex-col md:flex-row max-w-4xl w-full overflow-hidden">
+                
+                <!-- Left Side: Branding/Info --><div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-between bg-slate-800/50" style="background-image: linear-gradient(to bottom right, rgba(30, 41, 59, 0.5), rgba(15, 23, 42, 0.8)), url('https://placehold.co/600x800/1e293b/475569?text=Tanix'); background-size: cover; background-position: center;">
+                    <div>
+                        <a href="#" class="flex items-center space-x-2">
+                            <svg class="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                            <span class="text-2xl font-bold">Tanix</span>
+                        </a>
+                        <h1 class="text-3xl md:text-4xl font-bold text-white mt-12">
+                            Join Our Platform
+                        </h1>
+                        <p class="text-gray-300 mt-4 text-lg">
+                            Start trading with the most advanced and user-friendly platform.
+                        </p>
+                    </div>
+                    <div class="mt-8">
+                        <p class="text-sm text-gray-400">&copy; 2025 Tanix. All rights reserved.</p>
+                    </div>
+                </div>
+                
+                <!-- Right Side: Form Area --><div class="w-full md:w-1/2 p-8 md:p-12">
+                    <!-- Mobile Logo --><div class="flex items-center space-x-2 md:hidden mb-6">
+                        <svg class="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        <span class="text-2xl font-bold">Tanix</span>
+                    </div>
+
+                    <!-- Message Area --><div id="message-area" class="p-3 mb-4 text-center rounded-lg bg-slate-700 text-green-400 hidden">
+                        <!-- Messages will appear here --></div>
+                    
+                    <!-- Tabs: Login / Registration --><div class="flex mb-6 border-b border-slate-700">
+                        <button id="login-tab" class="flex-1 py-3 text-center font-semibold border-b-2 border-blue-500 text-white transition duration-300">
+                            Login
+                        </button>
+                        <button id="registration-tab" class="flex-1 py-3 text-center font-semibold text-gray-400 hover:text-white transition duration-300">
+                            Registration
+                        </button>
+                    </div>
+                    
+                    <!-- Login Form --><form id="login-form" class="space-y-6" method="post" action="/auth/login">
+                        <div>
+                            <label for="login-email" class="block text-sm font-medium text-gray-300">Email</label>
+                            <input type="email" id="login-email" name="email" class="mt-1 block w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="you@example.com" required>
+                        </div>
+                        <div>
+                            <label for="login-password" class="block text-sm font-medium text-gray-300">Password</label>
+                            <input type="password" id="login-password" name="password" class="mt-1 block w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="••••••••" required>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input id="remember-me" type="checkbox" class="h-4 w-4 bg-slate-700 border-slate-600 text-blue-600 focus:ring-blue-500 rounded">
+                                <label for="remember-me" class="ml-2 block text-sm text-gray-400">Remember me</label>
+                            </div>
+                            <a href="#" class="text-sm text-blue-400 hover:text-blue-300">Forgot password?</a>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 shadow-lg shadow-blue-600/30">
+                            Login
+                        </button>
+                    </form>
+                    
+                    <!-- Registration Form (hidden by default) --><form id="registration-form" class="space-y-6 hidden" method="post" action="/auth/register">
+                        <div>
+                            <label for="reg-email" class="block text-sm font-medium text-gray-300">Email</label>
+                            <input type="email" id="reg-email" name="email" class="mt-1 block w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="you@example.com" required>
+                        </div>
+                        <div>
+                            <label for="reg-password" class="block text-sm font-medium text-gray-300">Password</label>
+                            <input type="password" id="reg-password" name="password" class="mt-1 block w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Create a password (min. 6 chars)" required>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="terms" type="checkbox" class="h-4 w-4 bg-slate-700 border-slate-600 text-blue-600 focus:ring-blue-500 rounded" required>
+                            <label for="terms" class="ml-2 block text-sm text-gray-400">
+                                I am 18 years old and I accept the <a href="#" class="text-blue-400 hover:text-blue-300">Service Agreement</a>.
+                            </label>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-300 shadow-lg shadow-blue-600/30">
+                            Register
+                        </button>
+                    </form>
+
+                    <!-- OR Divider --><div class="my-6 flex items-center">
+                        <div class="flex-grow border-t border-slate-700"></div>
+                        <span class="mx-4 text-sm font-semibold text-gray-400">OR</span>
+                        <div class="flex-grow border-t border-slate-700"></div>
+                    </div>
+                    
+                    <!-- Social Logins --><div class="flex flex-col sm:flex-row gap-4">
+                        <!-- Google --><a id="google-login-btn" href="/auth/google/login" class="flex-1 flex items-center justify-center p-3 bg-slate-700 hover:bg-slate-600 rounded-lg transition duration-300">
+                            <i class="fab fa-google text-lg text-red-400"></i>
+                            <span class="ml-3 font-semibold text-sm">Continue with Google</span>
+                        </a>
+                        <!-- Facebook Placeholder --><button class="flex-1 flex items-center justify-center p-3 bg-slate-800 rounded-lg transition duration-300 opacity-40 cursor-not-allowed" title="Facebook login coming soon">
+                            <i class="fab fa-facebook-f text-lg text-blue-500"></i>
+                            <span class="ml-3 font-semibold text-sm">Facebook (coming soon)</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Footer link (changes based on tab) --><div id="form-footer" class="mt-8 text-center text-sm text-gray-400">
+                        <span>Don't have an account?</span>
+                        <a id="footer-link" href="#" class="font-medium text-blue-400 hover:text-blue-300">
+                            Register now
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+            
+        </div>
+    </div> <!-- End main-content --><!-- NEW FOOTER SECTION --><footer class="bg-slate-900 text-gray-400 py-12 px-4 sm:px-6 lg:px-8 mt-auto"> <!-- mt-auto pushes footer to bottom --><div class="max-w-7xl mx-auto">
+            <!-- Top Footer Part: Links and Social --><div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-8">
+                
+                <!-- Logo (hidden on small, visible on large) --><div class="hidden lg:block">
+                     <a href="#" class="flex items-center space-x-2">
+                        <svg class="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        <span class="text-2xl font-bold text-white">Tanix</span>
+                    </a>
+                </div>
+
+                <!-- FAQ Column --><div>
+                    <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase flex items-center">
+                        FAQ <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </h3>
+                    <ul class="mt-4 space-y-3">
+                        <li><a href="#" class="text-base hover:text-white transition duration-300">General questions</a></li>
+                        <li><a href="#" class="text-base hover:text-white transition duration-300">Financial questions</a></li>
+                        <li><a href="#" class="text-base hover:text-white transition duration-300">Verification</a></li>
+                    </ul>
+                </div>
+
+                <!-- About Us Column --><div>
+                    <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase flex items-center">
+                        About us <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </h3>
+                    <ul class="mt-4 space-y-3">
+                        <li><a href="#" class="text-base hover:text-white transition duration-300">Contacts</a></li>
+                    </ul>
+                </div>
+
+                <!-- More Column --><div>
+                    <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">More</h3>
+                    <ul class="mt-4 space-y-3">
+                        <li><a href="#" class="text-base hover:text-white transition duration-300">Demo account</a></li>
+                        <li>
+                            <a href="#" class="text-base hover:text-white transition duration-300 flex items-center">
+                                Affiliate program <i class="fas fa-external-link-alt text-xs ml-2"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Social/App Column --><div class="lg:col-start-5 md:col-span-2 lg:col-span-1">
+                    <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">Download the app</h3>
+                    <a href="#" class="mt-4 inline-block">
+                        <img src="https://placehold.co/135x40/000000/FFFFFF?text=GET+IT+ON&font=roboto" alt="Get it on Google Play" 
+                             onerror="this.onerror=null; this.src='https://placehold.co/135x40/000000/FFFFFF?text=Google+Play';" 
+                             class="h-10 w-auto rounded-md">
+                    </a>
+
+                    <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase mt-6">Follow us on social media</h3>
+                    <div class="mt-4 flex space-x-4">
+                        <a href="#" class="flex items-center justify-between bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg transition duration-300 w-full max-w-[120px]">
+                            <i class="fab fa-facebook-f text-blue-500 text-xl"></i>
+                            <span class="text-white font-semibold text-sm">10K+</span>
+                        </a>
+                        <a href="#" class="flex items-center justify-between bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg transition duration-300 w-full max-w-[120px]">
+                            <i class="fab fa-instagram text-pink-500 text-xl"></i>
+                            <span class="text-white font-semibold text-sm">7K+</span>
+                        </a>
+                        <a href="#" class="flex items-center justify-between bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg transition duration-300 w-full max-w-[120px]">
+                            <i class="fab fa-telegram-plane text-blue-400 text-xl"></i>
+                            <span class="text-white font-semibold text-sm">90K+</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Footer Part: Regulations and Disclaimer --><div class="mt-12 pt-8 border-t border-slate-700/50 flex flex-col lg:flex-row">
+                <!-- Regulations Links --><div class="w-full lg:w-1/4 mb-8 lg:mb-0">
+                    <h3 class="text-sm font-semibold text-gray-300 tracking-wider uppercase">Regulations</h3>
+                    <ul class="mt-4 space-y-3 text-sm">
+                        <li><a href="#" class="hover:text-white transition duration-300">Privacy policy</a></li>
+                        <li><a href="#" class="hover:text-white transition duration-300">Service agreement</a></li>
+                        <li><a href="#" class="hover:text-white transition duration-300">Risk disclosure</a></li>
+                        <li><a href="#" class="hover:text-white transition duration-300">Rules of trading operations</a></li>
+                        <li><a href="#" class="hover:text-white transition duration-300">Non-trading operations regulations</a></li>
+                        <li><a href="#" class="hover:text-white transition duration-300">Payment policy</a></li>
+                    </ul>
+                </div>
+                <!-- Disclaimer Text --><div class="w-full lg:w-3/4 text-sm space-y-4">
+                    <p>ON SPOT LLC GROUP: Address: Main Street, P.O. Box 625, Charlestown, St. Kitts and Nevis.</p>
+                    <p>The website services are not available in a number of countries, including USA, Canada, Hong Kong, EEA countries, Israel, Russia as well as for persons under 18 years of age.</p>
+                    <p>Risk Warning: Trading Forex and Leveraged Financial Instruments involves significant risk and can result in the loss of your invested capital. You should not invest more than you can afford to lose and should ensure that you fully understand the risks involved. Trading leveraged products may not be suitable for all investors. Trading non-leveraged products such as stocks also involves risk as the value of a stock can fall as well as rise, which could mean getting back less than you originally put in. Past performance is no guarantee of future results. Before trading, please take into consideration your level of experience, investment objectives and seek independent financial advice if necessary. It is the responsibility of the Client to ascertain whether he/she is permitted to use the services of the Tanix brand based on the legal requirements in his/her country of residence.</p>
+                    <p>ON SPOT LLC GROUP is the owner of the qtxbroker.com domain.<br>Copyright © 2025 Tanix. All rights reserved.</p>
+                </div>
+            </div>
+
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+
+        // --- Particles.js Configuration ---
+        particlesJS('particles-js', {
+            "particles": {
+                "number": {
+                    "value": 100, // Increased from 80
+                    "density": {
+                        "enable": true,
+                        "value_area": 800
+                    }
+                },
+                "color": {
+                    "value": "#60a5fa" /* blue-400 - Brighter color */
+                },
+                "shape": {
+                    "type": "circle",
+                    "stroke": {
+                        "width": 0,
+                        "color": "#000000"
+                    },
+                    "polygon": {
+                        "nb_sides": 5
+                    },
+                    "image": {
+                        "src": "img/github.svg",
+                        "width": 100,
+                        "height": 100
+                    }
+                },
+                "opacity": {
+                    "value": 0.7, // Increased from 0.5
+                    "random": false,
+                    "anim": {
+                        "enable": false,
+                        "speed": 1,
+                        "opacity_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "size": {
+                    "value": 4, // Increased from 3
+                    "random": true,
+                    "anim": {
+                        "enable": false,
+                        "speed": 40,
+                        "size_min": 0.1,
+                        "sync": false
+                    }
+                },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#60a5fa", /* blue-400 - Brighter color */
+                    "opacity": 0.6, // Increased from 0.4
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 3,
+                    "direction": "none",
+                    "random": false,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false,
+                    "attract": {
+                        "enable": false,
+                        "rotateX": 600,
+                        "rotateY": 1200
+                    }
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": {
+                        "enable": true,
+                        "mode": "grab"
+                    },
+                    "onclick": {
+                        "enable": true,
+                        "mode": "push"
+                    },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": {
+                        "distance": 140,
+                        "line_linked": {
+                            "opacity": 1
+                        }
+                    },
+                    "bubble": {
+                        "distance": 400,
+                        "size": 40,
+                        "duration": 2,
+                        "opacity": 8,
+                        "speed": 3
+                    },
+                    "repulse": {
+                        "distance": 200,
+                        "duration": 0.4
+                    },
+                    "push": {
+                        "particles_nb": 4
+                    },
+                    "remove": {
+                        "particles_nb": 2
+                    }
+                }
+            },
+            "retina_detect": true
+        });
+
+        // --- Get UI Elements ---
+        const loginTab = document.getElementById('login-tab');
+        const registrationTab = document.getElementById('registration-tab');
+        
+        const loginForm = document.getElementById('login-form');
+        const registrationForm = document.getElementById('registration-form');
+        
+        const formFooter = document.getElementById('form-footer');
+        const footerLink = document.getElementById('footer-link');
+        const footerText = formFooter.querySelector('span');
+        
+        const messageArea = document.getElementById('message-area');
+        const termsCheckbox = document.getElementById('terms');
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        let googleEnabled = true;
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const errorParam = urlParams.get('error');
+        if (errorParam === 'invalidCredentials') {
+            showMessage('Invalid email or password. Please try again.', true);
+        } else if (errorParam === 'userExists') {
+            registrationTab.click();
+            showMessage('An account with this email already exists. Please log in.', true);
+        } else if (errorParam === 'googleUnavailable') {
+            showMessage('Google Sign-In is currently unavailable. Please use email/password.', true);
+        } else if (errorParam === 'googleDenied') {
+            showMessage('Google Sign-In was cancelled. Please try again or use your password.', true);
+        } else if (errorParam === 'googleAuthFailed') {
+            showMessage('We could not complete Google Sign-In. Please try again.', true);
+        } else if (errorParam === 'googleNotVerified') {
+            showMessage('Your Google account email is not verified. Please verify it and try again.', true);
+        }
+
+        // --- Helper Function for Messages ---
+        function showMessage(message, isError = false) {
+            if (!messageArea) return;
+            messageArea.textContent = message;
+            if (isError) {
+                messageArea.classList.remove('text-green-400');
+                messageArea.classList.add('text-red-400');
+            } else {
+                messageArea.classList.remove('text-red-400');
+                messageArea.classList.add('text-green-400');
+            }
+            messageArea.classList.remove('hidden');
+        }
+        
+        function clearMessage() {
+            if (messageArea) {
+                messageArea.textContent = '';
+                messageArea.classList.add('hidden');
+            }
+        }
+
+        // --- Tab Switching Logic (Original) ---
+        loginTab.addEventListener('click', () => {
+            clearMessage();
+            // Show login form, hide registration form
+            loginForm.classList.remove('hidden');
+            registrationForm.classList.add('hidden');
+            
+            // Set login tab active, registration tab inactive
+            loginTab.classList.add('border-blue-500', 'text-white');
+            loginTab.classList.remove('text-gray-400');
+            registrationTab.classList.remove('border-blue-500', 'text-white');
+            registrationTab.classList.add('text-gray-400');
+            
+            // Update footer text
+            footerText.textContent = "Don't have an account?";
+            footerLink.textContent = "Register now";
+        });
+
+        registrationTab.addEventListener('click', () => {
+            clearMessage();
+            // Show registration form, hide login form
+            registrationForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+            
+            // Set registration tab active, login tab inactive
+            registrationTab.classList.add('border-blue-500', 'text-white');
+            registrationTab.classList.remove('text-gray-400');
+            loginTab.classList.remove('border-blue-500', 'text-white');
+            loginTab.classList.add('text-gray-400');
+            
+            // Update footer text
+            footerText.textContent = "Already have an account?";
+            footerLink.textContent = "Login";
+        });
+        
+        footerLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            clearMessage();
+            // Check which tab is currently active and click the other one
+            if (loginForm.classList.contains('hidden')) {
+                loginTab.click();
+            } else {
+                registrationTab.click();
+            }
+        });
+
+        // --- NEW: Form Submit Logic ---
+
+        // Registration Form Submit
+        registrationForm.addEventListener('submit', (event) => {
+            clearMessage();
+
+            if (!termsCheckbox.checked) {
+                showMessage("You must be 18 and accept the Service Agreement.", true);
+                event.preventDefault();
+                return false;
+            }
+        });
+
+        // Login Form Submit
+        loginForm.addEventListener('submit', (event) => {
+            clearMessage();
+
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                showMessage("Please enter both email and password.", true);
+                event.preventDefault();
+                return false;
+            }
+        });
+
+        async function updateGoogleButtonState() {
+            if (!googleLoginBtn) return;
+            try {
+                const response = await fetch('/auth/google/status', { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) throw new Error('status request failed');
+                const data = await response.json();
+                googleEnabled = Boolean(data && data.enabled);
+            } catch (err) {
+                googleEnabled = false;
+            }
+
+            if (!googleEnabled) {
+                googleLoginBtn.classList.add('opacity-40', 'cursor-not-allowed');
+                googleLoginBtn.setAttribute('aria-disabled', 'true');
+                googleLoginBtn.setAttribute('title', 'Google Sign-In unavailable');
+            } else {
+                googleLoginBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+                googleLoginBtn.removeAttribute('aria-disabled');
+                googleLoginBtn.removeAttribute('title');
+            }
+        }
+
+        updateGoogleButtonState();
+        if (googleLoginBtn) {
+            googleLoginBtn.addEventListener('click', (e) => {
+                if (googleLoginBtn.getAttribute('aria-disabled') === 'true') {
+                    e.preventDefault();
+                    showMessage('Google Sign-In is currently unavailable. Please use email/password.', true);
+                }
+            });
+        }
+
+    </script>
+
+</body>
+</html>
+
+

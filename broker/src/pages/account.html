@@ -1,0 +1,99 @@
+<!-- Account Page Content (from backup) -->
+<div class="flex-1 p-4 sm:p-6 lg:p-8 flex-col">
+  <div class="max-w-6xl mx-auto w-full">
+    <h1 class="text-3xl font-bold text-white mb-6">Account Settings</h1>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2 space-y-6">
+        <div class="glass-panel card">
+          <h2 class="card-header">Personal Data</h2>
+          <div class="text-gray-400 mb-2">Email</div>
+          <div class="text-white mb-4" id="account-email">—</div>
+          <form id="account-profile-form" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input id="account-nickname" class="glass-input" placeholder="Nickname" autocomplete="off" />
+              <input id="account-first-name" class="glass-input" placeholder="First name" autocomplete="given-name" />
+              <input id="account-last-name" class="glass-input" placeholder="Last name" autocomplete="family-name" />
+              <div>
+                <label class="text-gray-400 text-sm mb-2 block" for="account-currency">Currency</label>
+                <div class="custom-select" id="account-currency-wrapper">
+                  <div class="custom-select-trigger glass-input" id="account-currency-display">USD</div>
+                  <ul class="custom-select-options" id="account-currency-options">
+                    <li data-value="USD">USD</li>
+                    <li data-value="EUR">EUR</li>
+                    <li data-value="GBP">GBP</li>
+                    <li data-value="INR">INR</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-gray-300">Two-Factor Authentication</span>
+              <label class="toggle">
+                <input id="account-two-factor" type="checkbox" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-gray-300">Email Notifications</span>
+              <label class="toggle">
+                <input id="account-email-notify" type="checkbox" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <button type="submit" class="w-full btn-glow btn-glow-buy py-3">Save Changes</button>
+          </form>
+        </div>
+
+        <div class="glass-panel card">
+          <h2 class="card-header">Security</h2>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-gray-300">Password</span>
+              <span class="badge">Keeps your account protected</span>
+            </div>
+          </div>
+          <div class="mt-6">
+            <h3 class="text-white font-medium mb-3">Change Password</h3>
+            <form id="account-password-form" class="space-y-3">
+              <input id="account-old-password" type="password" placeholder="Old password" class="glass-input" autocomplete="current-password" />
+              <input id="account-new-password" type="password" placeholder="New password (min 6 characters)" class="glass-input" autocomplete="new-password" />
+              <button type="submit" class="w-full btn-glow btn-glow-blue py-3 mt-2">Change Password</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-6">
+        <div class="glass-panel card">
+          <h2 class="card-header">Verification Status</h2>
+          <div class="space-y-3">
+            <div class="card-item">
+              <span class="card-item-label">Email</span>
+              <span class="card-item-value positive flex items-center gap-1"><i class="fas fa-check-circle"></i> Verified</span>
+            </div>
+            <div class="card-item">
+              <span class="card-item-label">Phone</span>
+              <span class="card-item-value pending flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> Pending</span>
+            </div>
+            <div class="card-item">
+              <span class="card-item-label">Identity</span>
+              <span class="card-item-value pending flex items-center gap-1"><i class="fas fa-exclamation-circle"></i> Pending</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-panel p-6 text-white text-center glow-border">
+          <h3 class="text-lg font-bold mb-2">Upgrade to Premium</h3>
+          <p class="text-sm mb-4 opacity-90">Get advanced analytics and priority support.</p>
+          <button class="w-full btn-glow btn-glow-buy py-2">Learn More</button>
+        </div>
+
+        <div class="glass-panel card">
+          <h2 class="card-header">Session</h2>
+          <p class="text-sm text-[var(--color-text-secondary)] mb-4">Signed in as <span id="account-session-email" class="font-semibold text-white">—</span></p>
+          <button id="logoutButton" class="w-full btn-glow btn-glow-blue py-3">Log Out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
