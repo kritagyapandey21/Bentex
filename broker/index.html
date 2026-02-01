@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanix - Advanced Trading Platform</title>
+    
+    <!-- External Dependencies -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lightweight Charts Library -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="src/css/style.css?v=24">
+</head>
+<body class="futuristic-ui">
+
+    <!-- Header -->
+    <header class="h-header glass-panel flex items-center justify-between px-4 lg:px-6 mx-2 mt-2">
+        <div class="flex items-center gap-3 min-w-[220px]">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-blue)] flex items-center justify-center">
+                    <span class="text-white font-bold text-xl">T</span>
+                </div>
+                <span class="text-2xl font-bold text-white hidden sm:inline">Tanix</span>
+            </div>
+        </div>
+
+        <!-- Centered top navigation -->
+        <div class="hidden md:flex flex-1 justify-center items-center gap-2">
+            <button class="nav-link active-nav-link" data-page="trade">Trade</button>
+            <button class="nav-link" data-page="tournaments">Tournaments</button>
+            <button class="nav-link" data-page="promotions">Promotions</button>
+            <button class="nav-link" data-page="help">Help</button>
+        </div>
+        
+        <div class="flex items-center gap-3 min-w-[220px] justify-end">
+            <div class="hidden md:flex items-center gap-2 text-sm font-medium text-gray-300">
+                <i class="fas fa-wallet text-gray-400 mr-2"></i>
+                Balance: <span class="font-semibold text-[var(--neon-green)]" id="balanceAmount">$10,000.00</span>
+            </div>
+            <button class="btn-glow btn-glow-buy py-2 px-4 text-sm flex items-center gap-2" id="depositBtn">
+                <i class="fas fa-plus"></i> Deposit
+            </button>
+            <div class="relative" style="z-index: 50000;">
+                <div class="glass-panel rounded-lg px-4 py-2 flex items-center gap-2 text-sm font-medium text-gray-300 hover:bg-[var(--glass-hover-bg)] cursor-pointer" id="userMenu">
+                    <div class="h-6 w-6 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white">JD</div>
+                    <span id="userMenuName" class="text-xs sm:text-sm font-semibold text-gray-100 max-w-[160px] truncate">John Doe</span>
+                    <i class="fas fa-chevron-down text-xs" id="userMenuChevron"></i>
+                </div>
+                <!-- User Dropdown Menu -->
+                <div id="userDropdown" class="hidden w-64 glass-panel rounded-lg shadow-2xl border border-gray-700/50 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-700/50 flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="text-xs text-gray-400 mb-1">Signed in as</div>
+                            <div class="text-sm font-semibold text-white truncate" id="dropdownUserEmail">user@example.com</div>
+                        </div>
+                        <button class="close-dropdown-btn hover:bg-red-500/20 rounded p-1.5 ml-2" title="Close">
+                            <i class="fas fa-times text-gray-400 hover:text-red-400"></i>
+                        </button>
+                    </div>
+                    <div class="py-2">
+                        <button class="user-menu-item" data-action="account">
+                            <i class="fas fa-user-circle w-5"></i>
+                            <span>Account Settings</span>
+                        </button>
+                        <button class="user-menu-item" data-action="history">
+                            <i class="fas fa-history w-5"></i>
+                            <span>Trade History</span>
+                        </button>
+                        <button class="user-menu-item" data-action="analytics">
+                            <i class="fas fa-chart-bar w-5"></i>
+                            <span>Analytics</span>
+                        </button>
+                        <button class="user-menu-item" data-action="deposit">
+                            <i class="fas fa-wallet w-5"></i>
+                            <span>Deposit Funds</span>
+                        </button>
+                    </div>
+                    <div class="border-t border-gray-700/50 py-2">
+                        <button class="user-menu-item text-red-400 hover:bg-red-500/10" data-action="logout">
+                            <i class="fas fa-sign-out-alt w-5"></i>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex h-main-content px-2 pb-2 gap-2">
+        
+        <!-- Sidebar Navigation -->
+        <div class="w-20 glass-panel flex-col items-center py-4 gap-4 hidden md:flex sidebar-fixed">
+            <div class="sidebar-item active-sidebar-item flex flex-col items-center gap-1 w-full py-2 cursor-pointer" data-page="trade">
+                <i class="sidebar-icon text-xl fas fa-chart-line"></i>
+                <span class="text-xs font-medium">Trade</span>
+            </div>
+            <div class="sidebar-item glow-on-hover flex flex-col items-center gap-1 w-full py-2 cursor-pointer" data-page="account">
+                <i class="sidebar-icon text-xl fas fa-user"></i>
+                <span class="text-xs font-medium">Account</span>
+            </div>
+            <div class="sidebar-item glow-on-hover flex flex-col items-center gap-1 w-full py-2 cursor-pointer" data-page="analytics">
+                <i class="sidebar-icon text-xl fas fa-chart-bar"></i>
+                <span class="text-xs font-medium">Analytics</span>
+            </div>
+            <div class="sidebar-item glow-on-hover flex flex-col items-center gap-1 w-full py-2 cursor-pointer" data-page="market">
+                <i class="sidebar-icon text-xl fas fa-store"></i>
+                <span class="text-xs font-medium">Market</span>
+            </div>
+            <div class="sidebar-item glow-on-hover flex flex-col items-center gap-1 w-full py-2 cursor-pointer" data-page="deposit">
+                <i class="sidebar-icon text-xl fas fa-wallet"></i>
+                <span class="text-xs font-medium">Deposit</span>
+            </div>
+            <div class="sidebar-item glow-on-hover flex flex-col items-center gap-1 w-full py-2 cursor-pointer" data-page="settings">
+                <i class="sidebar-icon text-xl fas fa-cog"></i>
+                <span class="text-xs font-medium">Settings</span>
+            </div>
+            <div class="sidebar-item glow-on-hover flex flex-col items-center gap-1 w-full py-2 cursor-pointer" data-page="tournaments">
+                <i class="sidebar-icon text-xl fas fa-trophy"></i>
+                <span class="text-xs font-medium">Tournament</span>
+            </div>
+            <div class="sidebar-item glow-on-hover flex flex-col items-center gap-1 w-full py-2 cursor-pointer" data-page="help">
+                <i class="sidebar-icon text-xl fas fa-question-circle"></i>
+                <span class="text-xs font-medium">Help</span>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Dynamic page root; content loaded from src/pages/*.html -->
+            <main id="page-root" class="flex-1 flex flex-col overflow-hidden"></main>
+        </div>
+    </div>
+
+    <!-- JavaScript Modules (in correct order) -->
+    <script src="src/js/utils.js?v=17"></script>
+    <!-- Deterministic RNG and Generator (from trading view chart) -->
+    <script src="src/js/rng.js?v=28"></script>
+    <script src="src/js/generator.js?v=28"></script>
+    <!-- Lightweight Charts Implementation -->
+    <script src="src/js/lightweight-chart.js?v=28"></script>
+    <!-- Chart Debug Helper -->
+        <!-- Debug Scripts -->
+    <script src="src/js/chart-debug.js?v=26"></script>
+    <!-- Deterministic Candle System (existing) -->
+    <script src="src/js/deterministic-candles.js?v=18"></script>
+    <script src="src/js/deterministic-chart-integration.js?v=18"></script>
+    <!-- New Deterministic Chart Integration -->
+    <script src="src/js/deterministic-chart.js?v=19"></script>
+    <!-- Legacy Chart System (for fallback) -->
+    <script src="src/js/pro-chart.js?v=18"></script>
+    <script src="src/js/chart.js?v=18"></script>
+    <script src="src/js/ui.js?v=24"></script>
+    <script src="src/js/app.js?v=25"></script>
+
+</body>
+</html>
